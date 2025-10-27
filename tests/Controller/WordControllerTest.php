@@ -20,11 +20,11 @@ class WordControllerTest extends WebTestCase
         // Check response status
         $this->assertResponseIsSuccessful();
 
-        // // Decode response JSON
-        // $data = json_decode($response->getContent(), true);
+        // Decode response JSON
+        $data = json_decode($response->getContent(), true);
 
-        // // Check structure and value
-        // $this->assertArrayHasKey('score', $data);
-        // $this->assertSame(8, $data['score']); // or whatever correct score your logic gives
+        // Check structure and value
+        $this->assertArrayHasKey('score', $data);
+        $this->assertSame(6, $data['score']); // or whatever correct score your logic gives
     }
 }

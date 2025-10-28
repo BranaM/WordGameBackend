@@ -18,7 +18,7 @@
         <server name="KERNEL_CLASS" value="App\Kernel" />
         <server name="DEFAULT_URI" value="http://localhost" />
         <server name="CORS_ALLOW_ORIGIN" value="*" />
-        <server name="DATABASE_URL" value="sqlite:///:memory:" />
+        <server name="DATABASE_URL" value="postgresql://user:wordpassword@127.0.0.1:5432/wordgame?serverVersion=16&amp;charset=utf8" />
     </php>
 
     <testsuites>

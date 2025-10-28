@@ -32,21 +32,21 @@ class ScoreWordCommand extends Command
 
         while (true) {
             $question = new Question('Enter your word: ');
-            $rec = $helper->ask($input, $output, $question);
+            $word = $helper->ask($input, $output, $question);
 
-            if (strtolower($rec) === '!exit') {
+            if (strtolower($word) === '!exit') {
                 $output->writeln("Exiting application. Thank you for playing!");
                 break;
             }
 
-            $result = $this->wordService->processWord($rec);
+            $result = $this->wordService->processWord($word);
 
             if (!$result->isValid) {
                 $output->writeln($result->message . "\n");
                 continue;
             }
 
-            $output->writeln("Score for word: '$rec' is: {$result->score}\n");
+            $output->writeln("Score for word: '$word' is: {$result->score}\n");
         }
         return Command::SUCCESS;
     }

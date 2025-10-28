@@ -2,23 +2,27 @@
 
 namespace App\Service;
 
+use App\Entity\WordRecord;
+use App\Repository\WordRecordRepository;
+use Doctrine\ORM\EntityManagerInterface;
+
 class WordService
 {
     private array $dictionary;
+    private WordRecordRepository $wordRepo;
 
-    public function __construct()
+    public function __construct(WordRecordRepository $wordRepo)
     {
-        // Load the dictionary into memory
+        $this->wordRepo = $wordRepo;
+
         $dictionaryPath = __DIR__ . '/../Data/words_alpha.txt';
         if (!file_exists($dictionaryPath)) {
             throw new \RuntimeException("Dictionary file not found at $dictionaryPath");
         }
 
-        // Load all words into an array
         $this->dictionary = array_flip(
             array_map('strtolower', file($dictionaryPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))
         );
-        // Using array_flip for faster lookup: isset() is O(1)
     }
 
     public function isEnglishWord(string $word): bool
@@ -26,18 +30,28 @@ class WordService
         return isset($this->dictionary[strtolower($word)]);
     }
 
-    public function calculateScore(string $word): int
+    public function calculateAndSave(string $word): int
     {
-        $word = strtolower($word);
+        $wordLower = strtolower($word);
+        $wordRecord = $this->wordRepo->findByWord($wordLower);
+        if ($wordRecord) {
+            return $wordRecord->getScore();
+        }
+
+        $score = $this->calculateScore($wordLower);
+        $this->wordRepo->saveWordScore($wordLower, $score);
+    
+        return $score;
+    }
+
+    private function calculateScore(string $word): int
+    {
         $uniqueLetters = count(array_unique(str_split($word)));
         $score = $uniqueLetters;
 
-        // Palindrome bonus
         if ($this->isPalindrome($word)) {
             $score += 3;
-        } 
-        // Almost palindrome bonus (+2)
-        elseif ($this->isAlmostPalindrome($word)) {
+        } elseif ($this->isAlmostPalindrome($word)) {
             $score += 2;
         }
 
@@ -57,7 +71,6 @@ class WordService
 
         while ($left < $right) {
             if ($word[$left] !== $word[$right]) {
-                // Remove either left or right letter and check palindrome
                 $oneRemovedLeft = substr($word, $left + 1, $right - $left);
                 $oneRemovedRight = substr($word, $left, $right - $left);
 
@@ -68,7 +81,6 @@ class WordService
             $right--;
         }
 
-        // Already a palindrome, so not "almost"
         return false;
     }
 }

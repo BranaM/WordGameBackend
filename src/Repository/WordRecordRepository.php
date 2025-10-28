@@ -17,7 +17,7 @@ class WordRecordRepository extends ServiceEntityRepository
 
     public function findByWord(string $word): ?WordRecord
     {
-        return $this->findOneBy(['word' => strtolower($word)]);
+        return $this->findOneBy(['word' => $word]);
     }
 
     public function upsertWordScore(string $word, int $score): WordRecord

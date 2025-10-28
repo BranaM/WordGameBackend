@@ -26,7 +26,7 @@ class WordController extends AbstractController
             ], 400);
         }
 
-        $word = trim($data['word']);
+        $word = $data['word'];
 
         if (!$this->wordService->isEnglishWord($word)) {
             return $this->json([

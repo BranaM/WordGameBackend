@@ -25,17 +25,22 @@ class WordService
         );
     }
 
+    private function normalizeWord(string $word): string
+    {
+        return strtolower(trim($word));
+    }
+
     public function isEnglishWord(string $word): bool
     {
-        return isset($this->dictionary[strtolower($word)]);
+        return isset($this->dictionary[$this->normalizeWord($word)]);
     }
 
     public function calculateAndSave(string $word): int
     {
-        $wordLower = strtolower($word);
-        $score = $this->calculateScore($wordLower);
+        $normalizedWord = $this->normalizeWord($word);
+        $score = $this->calculateScore($normalizedWord);
 
-        $wordRecord = $this->wordRepo->upsertWordScore($wordLower, $score);
+        $wordRecord = $this->wordRepo->upsertWordScore($normalizedWord, $score);
 
         return $wordRecord->getScore();
     }

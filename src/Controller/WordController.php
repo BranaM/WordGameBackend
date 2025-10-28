@@ -27,24 +27,16 @@ class WordController extends AbstractController
         }
 
         $word = $data['word'];
+        $result = $this->wordService->processWord($word);
 
-        if (!$this->wordService->isEnglishWord($word)) {
-            return $this->json([
-                'success' => false,
-                'word' => $word,
-                'score' => 0,
-                'message' => 'Word is not a valid English word.'
-            ], status: 200);
-        }
-
-        $score = $this->wordService->calculateAndSave($word);
+        $statusCode = $result->isValid ? 201 : 200;
 
         return $this->json([
-            'success' => true,
-            'word' => $word,
-            'score' => $score,
-            'message' => 'Word saved successfully.'
-        ], 201);
+            'success' => $result->isValid,
+            'word' => trim(strtolower($word)),
+            'score' => $result->score,
+            'message' => $result->message
+        ], $statusCode);
     }
 
     #[Route('/words/ranked', name: 'ranked_words', methods: ['GET'])]

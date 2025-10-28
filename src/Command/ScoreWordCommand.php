@@ -39,13 +39,14 @@ class ScoreWordCommand extends Command
                 break;
             }
 
-            if (!$this->wordService->isEnglishWord($rec)) {
-                $output->writeln("Word: '$rec' is not valid English word.\n");
+            $result = $this->wordService->processWord($rec);
+
+            if (!$result->isValid) {
+                $output->writeln($result->message . "\n");
                 continue;
             }
 
-            $score = $this->wordService->calculateAndSave($rec);
-            $output->writeln("Score for word: '$rec' is: $score\n");
+            $output->writeln("Score for word: '$rec' is: {$result->score}\n");
         }
         return Command::SUCCESS;
     }

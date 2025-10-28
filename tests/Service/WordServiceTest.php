@@ -34,44 +34,34 @@ class WordServiceTest extends TestCase
         $this->assertFalse($this->wordService->isEnglishWord('xyz'));
     }
 
-    public function testCalculateAndSaveScoreNewWord(): void
+    public function testProcessWordValid(): void
     {
         // Create a mock WordRecord
         $wordRecord = new WordRecord();
-        $wordRecord->setWord('apple')
-                   ->setScore(4)
+        $wordRecord->setWord('cat')
+                   ->setScore(3)
                    ->setCreatedAt(new \DateTimeImmutable());
 
         // Simulate upsert creating a new word
         $this->wordRepoMock
             ->expects($this->once())
             ->method('upsertWordScore')
-            ->with('apple', $this->anything())
+            ->with('cat', $this->anything())
             ->willReturn($wordRecord);
 
-        $score = $this->wordService->calculateAndSave('apple');
-        $this->assertIsInt($score);
-        $this->assertGreaterThan(0, $score);
+        $result = $this->wordService->processWord('cat');
+        $this->assertTrue($result->isValid);
+        $this->assertGreaterThan(0, $result->score);
+        $this->assertEquals('Word saved successfully.', $result->message);
     }
 
-    public function testCalculateAndSaveScoreWordAlreadyExists(): void
+    public function testProcessWordInvalid(): void
     {
-        // Create a mock existing WordRecord
-        $existingRecord = new WordRecord();
-        $existingRecord->setWord('level')
-                       ->setScore(5)
-                       ->setCreatedAt(new \DateTimeImmutable());
-
-        // Simulate upsert returning existing word
-        $this->wordRepoMock
-            ->expects($this->once())
-            ->method('upsertWordScore')
-            ->with('level', $this->anything())
-            ->willReturn($existingRecord);
-
-        $score = $this->wordService->calculateAndSave('level');
-        $this->assertIsInt($score);
-        $this->assertEquals(5, $score);
+        // Don't mock repository since word is invalid
+        $result = $this->wordService->processWord('xyz');
+        $this->assertFalse($result->isValid);
+        $this->assertEquals(0, $result->score);
+        $this->assertEquals('Word is not a valid English word.', $result->message);
     }
 
 }

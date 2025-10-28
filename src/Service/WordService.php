@@ -35,7 +35,7 @@ class WordService
         return isset($this->dictionary[$this->normalizeWord($word)]);
     }
 
-    public function calculateAndSave(string $word): int
+    private function calculateAndSave(string $word): int
     {
         $normalizedWord = $this->normalizeWord($word);
         $score = $this->calculateScore($normalizedWord);
@@ -88,5 +88,19 @@ class WordService
     public function getRankedWords(): array
     {
         return $this->wordRepo->getRankedWords();
+    }
+
+    public function processWord(string $word): WordResult
+    {
+        $normalizedWord = $this->normalizeWord($word);
+
+        if (!$this->isEnglishWord($normalizedWord)) {
+            return new WordResult(false, 0, 'Word is not a valid English word.');
+        }
+
+        $score = $this->calculateScore($normalizedWord);
+        $wordRecord = $this->wordRepo->upsertWordScore($normalizedWord, $score);
+
+        return new WordResult(true, $wordRecord->getScore(), 'Word saved successfully.');
     }
 }

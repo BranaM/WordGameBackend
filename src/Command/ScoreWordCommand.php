@@ -9,7 +9,6 @@ use Symfony\Component\Console\Question\Question;
 
 class ScoreWordCommand extends Command
 {
-    // protected static $defaultName = 'app:score-word';
     private $wordService;
 
     public function __construct(WordService $wordService)
@@ -20,35 +19,33 @@ class ScoreWordCommand extends Command
 
     protected function configure(): void
     {
-        
-        $this
-            ->setName('app:score-word')
-            ->setDescription('Omogucava korisniku da unese reci i dobije njihov score.');
+        $this->setName('app:score-word')
+            ->setDescription('Console app for WordGame app!.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $helper = $this->getHelper('question');
 
-        $output->writeln("Dobrodosli u WordGame konzolu!");
-        $output->writeln("Upisite 'exit' da izadjete.");
+        $output->writeln("Welcome to WordGame console!");
+        $output->writeln("Type '!exit' to leave.");
 
         while (true) {
-            $question = new Question('Unesite rec: ');
+            $question = new Question('Enter your word: ');
             $rec = $helper->ask($input, $output, $question);
 
-            if (strtolower($rec) === 'exit') {
-            $output->writeln("Izlaz iz aplikacije. Hvala sto ste igrali!");
-            break;
+            if (strtolower($rec) === '!exit') {
+                $output->writeln("Exiting application. Thank you for playing!");
+                break;
             }
 
             if (!$this->wordService->isEnglishWord($rec)) {
-                $output->writeln("Reč '$rec' nije validna engleska reč.\n");
+                $output->writeln("Word: '$rec' is not valid English word.\n");
                 continue;
             }
 
-            $score = $this->wordService->calculateScore($rec);
-            $output->writeln("Score reci '$rec' je: $score\n");
+            $score = $this->wordService->calculateAndSave($rec);
+            $output->writeln("Score for word: '$rec' is: $score\n");
         }
         return Command::SUCCESS;
     }

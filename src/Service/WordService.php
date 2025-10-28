@@ -40,7 +40,7 @@ class WordService
 
         $score = $this->calculateScore($wordLower);
         $this->wordRepo->saveWordScore($wordLower, $score);
-    
+
         return $score;
     }
 
@@ -75,12 +75,17 @@ class WordService
                 $oneRemovedRight = substr($word, $left, $right - $left);
 
                 return $oneRemovedLeft === strrev($oneRemovedLeft) ||
-                       $oneRemovedRight === strrev($oneRemovedRight);
+                    $oneRemovedRight === strrev($oneRemovedRight);
             }
             $left++;
             $right--;
         }
 
         return false;
+    }
+
+    public function getRankedWords(): array
+    {
+        return $this->wordRepo->getRankedWords();
     }
 }

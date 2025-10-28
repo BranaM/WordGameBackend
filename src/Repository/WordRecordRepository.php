@@ -36,5 +36,10 @@ class WordRecordRepository extends ServiceEntityRepository
         $this->_em->persist($record);
         $this->_em->flush();
     }
+
+    public function getRankedWords(): array
+    {
+        return $this->findBy([], ['score' => 'DESC']);
+    }
 }
 

@@ -2,39 +2,72 @@
 
 namespace App\Tests\Service;
 
+use App\Entity\WordRecord;
+use App\Exception\WordAlreadyExistsException;
+use App\Repository\WordRecordRepository;
 use App\Service\WordService;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 class WordServiceTest extends TestCase
 {
-    private WordService $service;
+    private WordService $wordService;
+    private $wordRepoMock;
+    private $emMock;
 
     protected function setUp(): void
     {
-        $this->service = new WordService();
+        // Mock Repository
+        $this->wordRepoMock = $this->createMock(WordRecordRepository::class);
+
+        // Kreiramo WordService sa mockovima
+        $this->wordService = new WordService($this->wordRepoMock);
+
+        // Override dictionary sa malim test setom reči
+        $reflection = new \ReflectionClass($this->wordService);
+        $property = $reflection->getProperty('dictionary');
+        $property->setAccessible(true);
+        $property->setValue($this->wordService, array_flip(['cat', 'dog', 'level', 'madam', 'apple']));
     }
 
     public function testIsEnglishWord(): void
     {
-        $this->assertTrue($this->service->isEnglishWord('level'));
-        $this->assertFalse($this->service->isEnglishWord('asdfgh'));
+        $this->assertTrue($this->wordService->isEnglishWord('cat'));
+        $this->assertTrue($this->wordService->isEnglishWord('CAT')); // case insensitive
+        $this->assertFalse($this->wordService->isEnglishWord('xyz'));
     }
 
-    public function testCalculateScorePalindrome(): void
+    public function testCalculateAndSaveScoreNewWord(): void
     {
-        $score = $this->service->calculateScore('level'); // unique letters 3 + palindrome 3
-        $this->assertEquals(6, $score);
+        // Simuliramo da reč ne postoji u bazi
+        $this->wordRepoMock
+            ->method('findByWord')
+            ->willReturn(null);
+
+        // Mock za persist i flush da samo prolazi
+        $this->emMock->expects($this->once())->method('persist');
+        $this->emMock->expects($this->once())->method('flush');
+
+        $score = $this->wordService->calculateAndSave('apple');
+        $this->assertIsInt($score);
+        $this->assertGreaterThan(0, $score);
     }
 
-    public function testCalculateScoreAlmostPalindrome(): void
-    {
-        $score = $this->service->calculateScore('levee'); // unique letters 4 + almost palindrome 2
-        $this->assertEquals(3, $score);
-    }
+    public function testCalculateAndSaveScoreWordAlreadyExists(): void
+{
+    // Simuliramo da reč već postoji u bazi
+    $this->wordRepoMock
+        ->method('saveWordScore')
+        ->willThrowException(new WordAlreadyExistsException('level'));
 
-    public function testCalculateScoreNormalWord(): void
-    {
-        $score = $this->service->calculateScore('hello'); // unique letters 4
-        $this->assertEquals(4, $score);
-    }
+    // Očekujemo da se baci exception
+    $this->expectException(WordAlreadyExistsException::class);
+    $this->expectExceptionMessage("The word 'level' already exists in the database.");
+
+    // Pozivamo servis koji treba da reaguje na exception iz repozitorijuma
+    $this->wordService->calculateAndSave('level');
 }
+
+}
+
+

@@ -15,7 +15,7 @@ class WordController extends AbstractController
     #[Route('/word', name: 'check_word', methods: ['POST'])]
     public function checkWord(Request $request): JsonResponse
     {
-         $data = json_decode($request->getContent(), true);
+        $data = json_decode($request->getContent(), true);
 
         if (!isset($data['word']) || empty(trim($data['word']))) {
             return $this->json([
@@ -26,7 +26,6 @@ class WordController extends AbstractController
 
         $word = trim($data['word']);
 
-        // Check if word is in the dictionary
         if (!$this->wordService->isEnglishWord($word)) {
             return $this->json([
                 'success' => false,
@@ -34,14 +33,22 @@ class WordController extends AbstractController
             ], 200);
         }
 
-        // Calculate score using updated service
-        $score = $this->wordService->calculateScore($word);
+        try {
+            $score = $this->wordService->calculateAndSave($word);
 
-        return $this->json([
-            'success' => true,
-            'word' => $word,
-            'score' => $score
-        ]);
+            return $this->json([
+                'success' => true,
+                'word' => $word,
+                'score' => $score,
+                'message' => 'Word saved successfully.'
+            ], 201);
+        } catch (\Exception $e) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Unexpected error: ' . $e->getMessage()
+            ], 500);
+        }
     }
+
 }
 

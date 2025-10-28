@@ -33,15 +33,11 @@ class WordService
     public function calculateAndSave(string $word): int
     {
         $wordLower = strtolower($word);
-        $wordRecord = $this->wordRepo->findByWord($wordLower);
-        if ($wordRecord) {
-            return $wordRecord->getScore();
-        }
-
         $score = $this->calculateScore($wordLower);
-        $this->wordRepo->saveWordScore($wordLower, $score);
 
-        return $score;
+        $wordRecord = $this->wordRepo->upsertWordScore($wordLower, $score);
+
+        return $wordRecord->getScore();
     }
 
     private function calculateScore(string $word): int

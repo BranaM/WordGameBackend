@@ -7,7 +7,6 @@ namespace App\Repository;
 use App\Entity\WordRecord;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use App\Exception\WordAlreadyExistsException;
 
 class WordRecordRepository extends ServiceEntityRepository
 {
@@ -21,20 +20,23 @@ class WordRecordRepository extends ServiceEntityRepository
         return $this->findOneBy(['word' => strtolower($word)]);
     }
 
-    public function saveWordScore(string $word, int $score): void
+    public function upsertWordScore(string $word, int $score): WordRecord
     {
         $wordRecord = $this->findByWord($word);
         if ($wordRecord) {
-            throw new WordAlreadyExistsException($word);
+            return $wordRecord;
         }
 
         $record = new WordRecord();
         $record->setWord($word)
-               ->setScore($score)
-               ->setCreatedAt(new \DateTimeImmutable());
+            ->setScore($score)
+            ->setCreatedAt(new \DateTimeImmutable());
 
-        $this->_em->persist($record);
-        $this->_em->flush();
+        $em = $this->getEntityManager();
+        $em->persist($record);
+        $em->flush();
+
+        return $record;
     }
 
     public function getRankedWords(): array

@@ -3,27 +3,24 @@
 namespace App\Tests\Service;
 
 use App\Entity\WordRecord;
-use App\Exception\WordAlreadyExistsException;
 use App\Repository\WordRecordRepository;
 use App\Service\WordService;
-use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
 
 class WordServiceTest extends TestCase
 {
     private WordService $wordService;
     private $wordRepoMock;
-    private $emMock;
 
     protected function setUp(): void
     {
         // Mock Repository
         $this->wordRepoMock = $this->createMock(WordRecordRepository::class);
 
-        // Kreiramo WordService sa mockovima
+        // Create WordService with mocks
         $this->wordService = new WordService($this->wordRepoMock);
 
-        // Override dictionary sa malim test setom reči
+        // Override dictionary with small test set of words
         $reflection = new \ReflectionClass($this->wordService);
         $property = $reflection->getProperty('dictionary');
         $property->setAccessible(true);
@@ -39,14 +36,18 @@ class WordServiceTest extends TestCase
 
     public function testCalculateAndSaveScoreNewWord(): void
     {
-        // Simuliramo da reč ne postoji u bazi
-        $this->wordRepoMock
-            ->method('findByWord')
-            ->willReturn(null);
+        // Create a mock WordRecord
+        $wordRecord = new WordRecord();
+        $wordRecord->setWord('apple')
+                   ->setScore(4)
+                   ->setCreatedAt(new \DateTimeImmutable());
 
-        // Mock za persist i flush da samo prolazi
-        $this->emMock->expects($this->once())->method('persist');
-        $this->emMock->expects($this->once())->method('flush');
+        // Simulate upsert creating a new word
+        $this->wordRepoMock
+            ->expects($this->once())
+            ->method('upsertWordScore')
+            ->with('apple', $this->anything())
+            ->willReturn($wordRecord);
 
         $score = $this->wordService->calculateAndSave('apple');
         $this->assertIsInt($score);
@@ -54,19 +55,24 @@ class WordServiceTest extends TestCase
     }
 
     public function testCalculateAndSaveScoreWordAlreadyExists(): void
-{
-    // Simuliramo da reč već postoji u bazi
-    $this->wordRepoMock
-        ->method('saveWordScore')
-        ->willThrowException(new WordAlreadyExistsException('level'));
+    {
+        // Create a mock existing WordRecord
+        $existingRecord = new WordRecord();
+        $existingRecord->setWord('level')
+                       ->setScore(5)
+                       ->setCreatedAt(new \DateTimeImmutable());
 
-    // Očekujemo da se baci exception
-    $this->expectException(WordAlreadyExistsException::class);
-    $this->expectExceptionMessage("The word 'level' already exists in the database.");
+        // Simulate upsert returning existing word
+        $this->wordRepoMock
+            ->expects($this->once())
+            ->method('upsertWordScore')
+            ->with('level', $this->anything())
+            ->willReturn($existingRecord);
 
-    // Pozivamo servis koji treba da reaguje na exception iz repozitorijuma
-    $this->wordService->calculateAndSave('level');
-}
+        $score = $this->wordService->calculateAndSave('level');
+        $this->assertIsInt($score);
+        $this->assertEquals(5, $score);
+    }
 
 }
 

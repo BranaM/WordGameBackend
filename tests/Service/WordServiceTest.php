@@ -7,10 +7,6 @@ use App\Repository\WordRecordRepository;
 use App\Service\WordService;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Unit tests for WordService
- * Tests public methods only with mocked repository
- */
 class WordServiceTest extends TestCase
 {
     private WordService $wordService;
@@ -21,58 +17,52 @@ class WordServiceTest extends TestCase
         $this->wordRepoMock = $this->createMock(WordRecordRepository::class);
         $this->wordService = new WordService($this->wordRepoMock);
 
-        // Override dictionary with test words
         $reflection = new \ReflectionClass($this->wordService);
         $property = $reflection->getProperty('dictionary');
         $property->setAccessible(true);
-        $property->setValue($this->wordService, array_flip(['cat', 'dog', 'level', 'civic', 'apple']));
+        $property->setValue($this->wordService, array_flip(['carrot', 'game', 'level', 'door', 'window']));
     }
-
-    // ==================== isEnglishWord() Tests ====================
 
     public function testIsEnglishWordReturnsTrue(): void
     {
-        $this->assertTrue($this->wordService->isEnglishWord('cat'));
-        $this->assertTrue($this->wordService->isEnglishWord('dog'));
+        $this->assertTrue($this->wordService->isEnglishWord('carrot'));
+        $this->assertTrue($this->wordService->isEnglishWord('window'));
     }
 
     public function testIsEnglishWordReturnsFalse(): void
     {
-        $this->assertFalse($this->wordService->isEnglishWord('xyz'));
-        $this->assertFalse($this->wordService->isEnglishWord('notvalid'));
+        $this->assertFalse($this->wordService->isEnglishWord('nxxdcnsl'));
+        $this->assertFalse($this->wordService->isEnglishWord('ncdsk'));
     }
 
     public function testIsEnglishWordCaseInsensitive(): void
     {
-        $this->assertTrue($this->wordService->isEnglishWord('CAT'));
-        $this->assertTrue($this->wordService->isEnglishWord('CaT'));
+        $this->assertTrue($this->wordService->isEnglishWord('CARROT'));
+        $this->assertTrue($this->wordService->isEnglishWord('CArroT'));
     }
 
     public function testIsEnglishWordHandlesWhitespace(): void
     {
-        $this->assertTrue($this->wordService->isEnglishWord('  cat  '));
+        $this->assertTrue($this->wordService->isEnglishWord('  carrot  '));
     }
-
-    // ==================== processWord() Tests ====================
 
     public function testProcessWordWithValidWord(): void
     {
-        // cat: 3 unique letters, not palindrome = 3
         $wordRecord = new WordRecord();
-        $wordRecord->setWord('cat')
-                   ->setScore(3)
-                   ->setCreatedAt(new \DateTimeImmutable());
+        $wordRecord->setWord('game')
+            ->setScore(4)
+            ->setCreatedAt(new \DateTimeImmutable());
 
         $this->wordRepoMock
             ->expects($this->once())
             ->method('upsertWordScore')
-            ->with('cat', 3)
+            ->with('game', 4)
             ->willReturn($wordRecord);
 
-        $result = $this->wordService->processWord('cat');
+        $result = $this->wordService->processWord('game');
 
         $this->assertTrue($result->isValid);
-        $this->assertEquals(3, $result->score);
+        $this->assertEquals(4, $result->score);
         $this->assertEquals('Word saved successfully.', $result->message);
     }
 
@@ -82,7 +72,7 @@ class WordServiceTest extends TestCase
             ->expects($this->never())
             ->method('upsertWordScore');
 
-        $result = $this->wordService->processWord('xyz');
+        $result = $this->wordService->processWord('nhdj');
 
         $this->assertFalse($result->isValid);
         $this->assertEquals(0, $result->score);
@@ -92,27 +82,26 @@ class WordServiceTest extends TestCase
     public function testProcessWordNormalizesInput(): void
     {
         $wordRecord = new WordRecord();
-        $wordRecord->setWord('cat')
-                   ->setScore(3)
-                   ->setCreatedAt(new \DateTimeImmutable());
+        $wordRecord->setWord('game')
+            ->setScore(4)
+            ->setCreatedAt(new \DateTimeImmutable());
 
         $this->wordRepoMock
             ->expects($this->once())
             ->method('upsertWordScore')
-            ->with('cat', 3)
+            ->with('game', 4)
             ->willReturn($wordRecord);
 
-        $result = $this->wordService->processWord('  CAT  ');
+        $result = $this->wordService->processWord('  GAME  ');
         $this->assertTrue($result->isValid);
     }
 
     public function testProcessWordCalculatesScoreWithPalindromeBonus(): void
     {
-        // level: 3 unique letters (l,e,v) + 3 palindrome bonus = 6
         $wordRecord = new WordRecord();
         $wordRecord->setWord('level')
-                   ->setScore(6)
-                   ->setCreatedAt(new \DateTimeImmutable());
+            ->setScore(6)
+            ->setCreatedAt(new \DateTimeImmutable());
 
         $this->wordRepoMock
             ->expects($this->once())
@@ -126,18 +115,16 @@ class WordServiceTest extends TestCase
         $this->assertEquals(6, $result->score);
     }
 
-    // ==================== getRankedWords() Tests ====================
-
     public function testGetRankedWordsReturnsOrderedList(): void
     {
         $word1 = new WordRecord();
         $word1->setWord('level')->setScore(6)->setCreatedAt(new \DateTimeImmutable());
 
         $word2 = new WordRecord();
-        $word2->setWord('apple')->setScore(4)->setCreatedAt(new \DateTimeImmutable());
+        $word2->setWord('carrot')->setScore(4)->setCreatedAt(new \DateTimeImmutable());
 
         $word3 = new WordRecord();
-        $word3->setWord('cat')->setScore(3)->setCreatedAt(new \DateTimeImmutable());
+        $word3->setWord('game')->setScore(3)->setCreatedAt(new \DateTimeImmutable());
 
         $this->wordRepoMock
             ->expects($this->once())

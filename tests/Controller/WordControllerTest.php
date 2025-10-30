@@ -4,19 +4,18 @@ namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-/**
- * Functional tests for WordController
- * Tests HTTP endpoints with real requests
- */
 class WordControllerTest extends WebTestCase
 {
-    // ==================== POST /word Tests ====================
 
     public function testCheckWordWithValidWord(): void
     {
         $client = static::createClient();
 
-        $client->request('POST', '/word', [], [],
+        $client->request(
+            'POST',
+            '/word',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode(['word' => 'test'])
         );
@@ -39,9 +38,13 @@ class WordControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('POST', '/word', [], [],
+        $client->request(
+            'POST',
+            '/word',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['word' => 'xyznotvalid'])
+            json_encode(['word' => 'ncslckmdis'])
         );
 
         $response = $client->getResponse();
@@ -58,7 +61,11 @@ class WordControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('POST', '/word', [], [],
+        $client->request(
+            'POST',
+            '/word',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode(['word' => ''])
         );
@@ -76,7 +83,11 @@ class WordControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('POST', '/word', [], [],
+        $client->request(
+            'POST',
+            '/word',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode([])
         );
@@ -94,7 +105,11 @@ class WordControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        $client->request('POST', '/word', [], [],
+        $client->request(
+            'POST',
+            '/word',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode(['word' => '   '])
         );
@@ -108,35 +123,15 @@ class WordControllerTest extends WebTestCase
         $this->assertEquals('No word provided.', $data['message']);
     }
 
-    public function testCheckWordReturns201ForValidWord(): void
-    {
-        $client = static::createClient();
-
-        $client->request('POST', '/word', [], [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['word' => 'hello'])
-        );
-
-        $this->assertResponseStatusCodeSame(201);
-    }
-
-    public function testCheckWordReturns200ForInvalidWord(): void
-    {
-        $client = static::createClient();
-
-        $client->request('POST', '/word', [], [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['word' => 'zzzznotreal'])
-        );
-
-        $this->assertResponseStatusCodeSame(200);
-    }
-
     public function testCheckWordNormalizesInput(): void
     {
         $client = static::createClient();
 
-        $client->request('POST', '/word', [], [],
+        $client->request(
+            'POST',
+            '/word',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
             json_encode(['word' => '  TEST  '])
         );
@@ -146,8 +141,6 @@ class WordControllerTest extends WebTestCase
 
         $this->assertEquals('test', $data['word']);
     }
-
-    // ==================== GET /words/ranked Tests ====================
 
     public function testGetRankedWordsReturnsSuccessfully(): void
     {
@@ -172,13 +165,15 @@ class WordControllerTest extends WebTestCase
     {
         $client = static::createClient();
 
-        // First add a word
-        $client->request('POST', '/word', [], [],
+        $client->request(
+            'POST',
+            '/word',
+            [],
+            [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode(['word' => 'apple'])
+            json_encode(['word' => 'flower'])
         );
 
-        // Then get ranked words
         $client->request('GET', '/words/ranked');
 
         $response = $client->getResponse();

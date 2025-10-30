@@ -1,7 +1,5 @@
 <?php
 
-// src/Repository/WordRecordRepository.php
-
 namespace App\Repository;
 
 use App\Entity\WordRecord;
